@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head><script>window.todakArt="art-5fb6a8129d.pck";window.todakArtSize=39538232;</script>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<title>토닥토닥 대장간</title>
+		<style>
+html, body, #canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+body {
+	color: white;
+	background-color: black;
+	overflow: hidden;
+	touch-action: none;
+}
+
+#canvas {
+	display: block;
+}
+
+#canvas:focus {
+	outline: none;
+}
+
+#status, #status-splash, #status-progress {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+
+#status, #status-splash {
+	top: 0;
+	bottom: 0;
+}
+
+#status {
+	background-color: #040508;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	visibility: hidden;
+}
+
+#status-splash {
+	max-height: 100%;
+	max-width: 100%;
+	margin: auto;
+}
+
+#status-splash.show-image--false {
+	display: none;
+}
+
+#status-splash.fullsize--true {
+	height: 100%;
+	width: 100%;
+	object-fit: contain;
+}
+
+#status-splash.use-filter--false {
+	image-rendering: pixelated;
+}
+
+#status-progress, #status-notice {
+	display: none;
+}
+
+#status-progress {
+	bottom: 10%;
+	width: 50%;
+	margin: 0 auto;
+}
+
+#status-notice {
+	background-color: #5b3943;
+	border-radius: 0.5rem;
+	border: 1px solid #9b3943;
+	color: #e0e0e0;
+	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
+	line-height: 1.3;
+	margin: 0 2rem;
+	overflow: hidden;
+	padding: 1rem;
+	text-align: center;
+	z-index: 1;
+}
+		</style>
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<link rel="manifest" href="index.manifest.json">
+<meta name="description" content="은퇴한 대장장이들의 마을에서 무기를 벼리고 메고 파는 힐링 대장간. 설치 없이 바로 해요.">
+<meta property="og:title" content="토닥토닥 대장간">
+<meta property="og:description" content="설치 없이 바로 하는 힐링 대장간 게임">
+<meta property="og:image" content="https://todakforge.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://todakforge.com/">
+<meta name="theme-color" content="#120a06">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="토닥토닥 대장간">
+<style>
+html, body { background: #120a06; }
+#status { background: radial-gradient(circle at 50% 42%, #3a1a0c 0%, #120a06 72%); }
+#status-progress { width: 62%; max-width: 280px; accent-color: #ff9a52; }
+#status-notice { color: #f3eee6; font-family: sans-serif; }
+</style>
+<script>
+(function () {
+  // 소리 (11-06: 소리가 안 나요): phones keep web audio asleep until a touch; wake every audio context the
+  // game makes on the first touches, and on iPhone play a short silent clip so sound comes even with the
+  // silent switch on.
+  // 끊김 (11-07): the engine's page hands every frame over through a blit that first asks WebGL for the scissor test
+  // and the bound framebuffer, and each such question waits for the GPU to catch up (a fifth of the frame in the
+  // CPU profile). Those two are answered from what was last set instead.
+  (function () {
+    var G = window.WebGL2RenderingContext; if (!G) return;
+    var P = G.prototype, en = P.enable, dis = P.disable, bind = P.bindFramebuffer, del = P.deleteFramebuffer, get = P.getParameter;
+    P.enable = function (c) { if (c === 0x0C11) this.__sc = true; return en.call(this, c); };
+    P.disable = function (c) { if (c === 0x0C11) this.__sc = false; return dis.call(this, c); };
+    P.bindFramebuffer = function (t, f) { if (t === 0x8D40 || t === 0x8CA9) this.__fb = f; return bind.call(this, t, f); };
+    P.deleteFramebuffer = function (f) { if (f && f === this.__fb) this.__fb = null; return del.call(this, f); };
+    P.getParameter = function (n) {
+      if (n === 0x0C11) { if (this.__sc === undefined) this.__sc = get.call(this, n); return this.__sc; }
+      if (n === 0x8CA6) { if (this.__fb === undefined) this.__fb = get.call(this, n); return this.__fb; }
+      return get.call(this, n);
+    };
+  })();
+  // 박자 (11-07): the engine's own frame cap waits by spinning on the clock (half the CPU in the profile, and the
+  // page cannot take a touch meanwhile). Instead the game's frame is run on every Nth screen refresh: 60 at most, 30
+  // when its frames take more than the 60's share, back to 60 when they fit again. todakPace.mode: auto / 30.
+  (function () {
+    var raf = window.requestAnimationFrame.bind(window);
+    var st = window.todakPace = { mode: 'auto', step: 1, vs: 16.7, work: 6, late: 0, n: 0, last: 0, ran: 0, hist: [] };
+    function choose() {
+      var base = Math.max(1, Math.round(16.7 / st.vs));
+      var slow = Math.max(base, Math.round(33.3 / st.vs));
+      if (st.mode === '30') st.step = slow;
+      else if (st.step < slow && (st.work > 0.92 * base * st.vs || st.late > 0.15)) st.step = slow;
+      else if (st.step > base && st.work < 0.62 * base * st.vs && st.late < 0.03) st.step = base;
+      else if (st.step < base) st.step = base;
+      st.n = 0; st.late = 0;
+    }
+    window.requestAnimationFrame = function (cb) {
+      if (cb.name !== 'MainLoop_runner') return raf(cb);
+      function tick(ts) {
+        // the refresh interval, from back-to-back refreshes only (a frame of the game in between makes it longer)
+        if (st.last) { var d = ts - st.last; if (d > 4 && d < st.vs * 1.4) st.vs += (d - st.vs) * 0.05; }
+        st.last = ts;
+        // by time, not by count: the game's own frame may span refreshes
+        if (st.ran && ts - st.ran < (st.step - 0.5) * st.vs) { raf(tick); return; }
+        if (st.ran) { st.late += ((ts - st.ran > (st.step + 0.5) * st.vs) ? 1 : 0) / 120; }
+        st.ran = ts;
+        if (st.hist.length < 8000) st.hist.push(ts);
+        var t0 = performance.now();
+        cb(ts);
+        st.work += (performance.now() - t0 - st.work) * 0.05;
+        if (++st.n >= 120) choose();
+      }
+      return raf(tick);
+    };
+  })();
+  // 주소 이사 (11-07, todakforge.com): the old address (10001-weapons.github.io/todaktodak) hands its progress over in
+  // the fragment — the device id and the save — since a browser keeps them per address. Taken only into a fresh one.
+  try {
+    if (location.hash.indexOf('#move=') === 0) {
+      var mv = JSON.parse(decodeURIComponent(location.hash.slice(6)));
+      if (!localStorage.getItem('hanjaru_save')) {
+        if (mv.d) localStorage.setItem('hanjaru_device', mv.d);
+        if (mv.s) localStorage.setItem('hanjaru_save', mv.s);
+      }
+      history.replaceState(null, '', location.pathname + location.search);
+    }
+  } catch (e) {}
+  var ctxs = []; window.__todakCtxs = ctxs;
+  // iPhone (Safari 16.4+): play like a video does, so the silent switch does not mute the game
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (AC) {
+    var Wrapped = function () { var c = new (Function.prototype.bind.apply(AC, [null].concat([].slice.call(arguments))))(); ctxs.push(c); return c; };
+    Wrapped.prototype = AC.prototype;
+    window.AudioContext = Wrapped;
+    if (window.webkitAudioContext) window.webkitAudioContext = Wrapped;
+  }
+  var tag = null;
+  function wake() {
+    ctxs.forEach(function (c) { if (c.state !== 'running') { try { c.resume(); } catch (e) {} } });
+    if (!tag) {
+      tag = document.createElement('audio');
+      tag.setAttribute('playsinline', '');
+      tag.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+    }
+    try { var p = tag.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+  }
+  ['touchstart', 'touchend', 'pointerdown', 'keydown', 'click'].forEach(function (n) { window.addEventListener(n, wake, { capture: true, passive: true }); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) wake(); });
+  // 홈 화면에 추가 (11-06): keep the browser's offer for the game to show at the right moment
+  window.todak = {
+    offer: null,
+    standalone: function () { return (window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches)) || navigator.standalone === true; },
+    ios: function () { return /iphone|ipad|ipod/i.test(navigator.userAgent); },
+    install: function () { var o = window.todak.offer; if (o) { o.prompt(); window.todak.offer = null; return 'asked'; } return window.todak.ios() ? 'ios' : 'none'; },
+    can: function () { return !window.todak.standalone() && (!!window.todak.offer || window.todak.ios()); }
+  };
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.todak.offer = e; });
+  window.addEventListener('appinstalled', function () { window.todak.offer = null; });
+})();
+</script>
+	</head>
+	<body>
+		<canvas id="canvas">
+			Your browser does not support the canvas tag.
+		</canvas>
+
+		<noscript>
+			Your browser does not support JavaScript.
+		</noscript>
+
+		<div id="status">
+			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+			<progress id="status-progress"></progress>
+			<div id="status-notice"></div>
+		</div>
+
+		<script src="index.js"></script>
+		<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw62oijy.pck":26384104},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw62oijy.pck"};
+const GODOT_THREADS_ENABLED = false;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const statusOverlay = document.getElementById('status');
+	const statusProgress = document.getElementById('status-progress');
+	const statusNotice = document.getElementById('status-notice');
+
+	let initializing = true;
+	let statusMode = '';
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			statusOverlay.remove();
+			initializing = false;
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function setStatusNotice(text) {
+		while (statusNotice.lastChild) {
+			statusNotice.removeChild(statusNotice.lastChild);
+		}
+		const lines = text.split('\n');
+		lines.forEach((line) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			statusNotice.appendChild(document.createElement('br'));
+		});
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		if (err instanceof Error) {
+			setStatusNotice(err.message);
+		} else if (typeof err === 'string') {
+			setStatusNotice(err);
+		} else {
+			setStatusNotice('An unknown error occurred.');
+		}
+		setStatusMode('notice');
+		initializing = false;
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			// Display the message as usual
+			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
+			displayFailureNotice(missingMsg + missing.join('\n'));
+		}
+	} else {
+		setStatusMode('progress');
+		engine.startGame({
+			'onProgress': function (current, total) {
+				if (current > 0 && total > 0) {
+					statusProgress.value = current;
+					statusProgress.max = total;
+				} else {
+					statusProgress.removeAttribute('value');
+					statusProgress.removeAttribute('max');
+				}
+			},
+		}).then(() => {
+			setStatusMode('hidden');
+		}, displayFailureNotice);
+	}
+}());
+		</script>
+	</body>
+</html>
+
