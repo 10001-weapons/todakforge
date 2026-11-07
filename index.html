@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head><script>window.todakArt="art-5fb6a8129d.pck";window.todakArtSize=39538968;</script>
+	<head><script>window.todakArt="art-5fb6a8129d.pck";window.todakArtSize=39539144;</script>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, viewport-fit=cover">
 		<title>토닥토닥 대장간 · 설치 없이 바로 하는 힐링 대장간 게임</title>
@@ -228,10 +228,13 @@ html, body { background: #120a06; }
 	<!--seo--><style>:root{--sat:env(safe-area-inset-top,0px)}html,body{background:#000}</style><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="naver-site-verification" content="b6fa2698a9af0001e9d6c2c77af804659aec0f3e"><script>(function () {
   var ua = navigator.userAgent || "";
   var kakao = /KAKAOTALK/i.test(ua);
+  // the page that Chrome opens from the bar knows it (Main._app_like puts 홈 화면에 추가 first, with a word)
+  window.todakFromApp = /[?&]from=inapp(&|$)/.test(location.search);
   var inapp = kakao || /Instagram|FBAN|FBAV|NAVER\(inapp|DaumApps|Line\/|BAND\/|everytimeApp|KAKAOSTORY/i.test(ua);
   if (!inapp) return;
+  window.todakInapp = true;
   var android = /Android/i.test(ua), ios = /iPhone|iPad|iPod/i.test(ua);
-  var url = location.href;
+  var url = location.href + (location.search ? "&" : "?") + "from=inapp";
   var open = function () {
     if (android) {
       location.href = "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(url) + ";end";
@@ -295,7 +298,7 @@ html, body { background: #120a06; }
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw6dba8f.pck":26413360},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw6dba8f.pck"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw6dlsqi.pck":26414240},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw6dlsqi.pck"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
