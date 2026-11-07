@@ -1,0 +1,61 @@
+# 메타모아 연결: 10분마다 지금 접속자 수, 손으로 돌리면 업데이트 소식 · 이벤트 · 야영지 캐릭터.
+# 공간 키 · 공간 번호는 저장소 비밀값 METAMOA_KEY · METAMOA_SPACE_ID에만 있다(없으면 아무것도 보내지 않음).
+name: metamoa
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "live | update | event | character"
+        required: true
+        default: live
+      text:
+        description: "update: 소식 (200자 · 3줄까지, 하루 한 번)"
+        required: false
+      title:
+        description: "event: 제목 (30자까지)"
+        required: false
+      starts_at:
+        description: "event: 시작 (예 2026-11-20T19:00:00+09:00)"
+        required: false
+      ends_at:
+        description: "event: 끝 (31일 안)"
+        required: false
+      desc:
+        description: "event: 한 줄 설명 (40자, 링크 없이)"
+        required: false
+permissions:
+  contents: read
+concurrency:
+  group: metamoa
+  cancel-in-progress: false
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/metamoa
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: send
+        env:
+          METAMOA_KEY: ${{ secrets.METAMOA_KEY }}
+          METAMOA_SPACE_ID: ${{ secrets.METAMOA_SPACE_ID }}
+          ACTION: ${{ inputs.action || 'live' }}
+          TEXT: ${{ inputs.text }}
+          TITLE: ${{ inputs.title }}
+          STARTS: ${{ inputs.starts_at }}
+          ENDS: ${{ inputs.ends_at }}
+          DESC: ${{ inputs.desc }}
+        run: |
+          case "$ACTION" in
+            update) node .github/metamoa/metamoa.mjs update "$TEXT" ;;
+            event) node .github/metamoa/metamoa.mjs event "$TITLE" "$STARTS" "$ENDS" "$DESC" ;;
+            character) node .github/metamoa/metamoa.mjs character ;;
+            *) node .github/metamoa/metamoa.mjs live ;;
+          esac
