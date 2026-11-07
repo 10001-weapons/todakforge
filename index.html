@@ -225,7 +225,52 @@ html, body { background: #120a06; }
   window.addEventListener('appinstalled', function () { window.todak.offer = null; });
 })();
 </script>
-	<!--seo--><style>:root{--sat:env(safe-area-inset-top,0px)}html,body{background:#000}</style><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="naver-site-verification" content="b6fa2698a9af0001e9d6c2c77af804659aec0f3e"><link rel="canonical" href="https://todakforge.com/">
+	<!--seo--><style>:root{--sat:env(safe-area-inset-top,0px)}html,body{background:#000}</style><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="naver-site-verification" content="b6fa2698a9af0001e9d6c2c77af804659aec0f3e"><script>(function () {
+  var ua = navigator.userAgent || "";
+  var kakao = /KAKAOTALK/i.test(ua);
+  var inapp = kakao || /Instagram|FBAN|FBAV|NAVER\(inapp|DaumApps|Line\/|BAND\/|everytimeApp|KAKAOSTORY/i.test(ua);
+  if (!inapp) return;
+  var android = /Android/i.test(ua), ios = /iPhone|iPad|iPod/i.test(ua);
+  var url = location.href;
+  var open = function () {
+    if (android) {
+      location.href = "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(url) + ";end";
+    } else if (ios) {
+      var t = setTimeout(function () { if (kakao) location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(url); }, 1500);
+      window.addEventListener("pagehide", function () { clearTimeout(t); });
+      location.href = url.replace(/^https:/, "googlechromes:");
+    } else if (kakao) {
+      location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(url);
+    }
+  };
+  var show = function () {
+    if (document.getElementById("todak-out")) return;
+    var bar = document.createElement("div");
+    bar.id = "todak-out";
+    bar.style.cssText = "position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:60;display:flex;align-items:center;gap:8px;" +
+      "padding:10px 10px 10px 14px;border-radius:14px;background:rgba(20,14,10,0.94);border:1px solid #f2a65a;box-shadow:0 6px 18px rgba(0,0,0,0.5);" +
+      "font:600 13px/1.35 sans-serif;color:#fbeedd";
+    var msg = document.createElement("div");
+    msg.style.cssText = "flex:1;min-width:0";
+    msg.textContent = (kakao ? "카카오톡 안에서 열렸어요. " : "앱 안의 브라우저로 열렸어요. ") +
+      (android || (ios && kakao) ? "크롬에서 열면 더 부드럽고 홈 화면에 추가할 수 있어요." : "오른쪽 위 ⋯ 메뉴에서 '다른 브라우저로 열기'를 눌러 주세요.");
+    bar.appendChild(msg);
+    if (android || (ios && kakao)) {
+      var b = document.createElement("button");
+      b.type = "button"; b.textContent = "크롬으로 열기";
+      b.style.cssText = "flex:none;border:0;border-radius:10px;padding:10px 12px;background:#ff9a4d;color:#2a1405;font:700 13px sans-serif";
+      b.addEventListener("click", open);
+      bar.appendChild(b);
+    }
+    var x = document.createElement("button");
+    x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", "닫기");
+    x.style.cssText = "flex:none;border:0;background:transparent;color:#d9c8b4;font:400 22px/1 sans-serif;padding:4px 6px";
+    x.addEventListener("click", function () { bar.remove(); });
+    bar.appendChild(x);
+    document.body.appendChild(bar);
+  };
+  if (document.body) show(); else document.addEventListener("DOMContentLoaded", show);
+})();</script><link rel="canonical" href="https://todakforge.com/">
 <meta name="keywords" content="토닥토닥 대장간, 대장간 게임, 힐링 게임, 무기 강화 게임, 웹게임, 설치 없는 게임, 브라우저 게임, 모바일 게임">
 <meta property="og:type" content="website"><meta property="og:site_name" content="토닥토닥 대장간"><meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="토닥토닥 대장간"><meta name="twitter:description" content="설치 없이 바로 하는 힐링 대장간 게임"><meta name="twitter:image" content="https://todakforge.com/og.png">
@@ -250,7 +295,7 @@ html, body { background: #120a06; }
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw6d4r4t.pck":26413360},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw6d4r4t.pck"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw6dba8f.pck":26413360},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw6dba8f.pck"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
