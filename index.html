@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head><script>window.todakArt="art-5fb6a8129d.pck";window.todakArtSize=39538232;</script>
+	<head><script>window.todakArt="art-5fb6a8129d.pck";window.todakArtSize=39538968;</script>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
 		<title>토닥토닥 대장간</title>
@@ -100,7 +100,7 @@ body {
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:url" content="https://todakforge.com/">
-<meta name="theme-color" content="#120a06">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="토닥토닥 대장간">
@@ -133,13 +133,22 @@ html, body { background: #120a06; }
   })();
   // 박자 (11-07): the engine's own frame cap waits by spinning on the clock (half the CPU in the profile, and the
   // page cannot take a touch meanwhile). Instead the game's frame is run on every Nth screen refresh: 60 at most, 30
-  // when its frames take more than the 60's share, back to 60 when they fit again. todakPace.mode: auto / 30.
+  // when its frames take more than the 60's share, back to 60 when they fit again. todakPace.mode: max / 60 / 30.
+  // 최대 (11-07: fps를 최대로): every refresh — 90 · 120 on such screens, stepping to 60 there when frames do not fit —
+  // and never held back to 30: a slow phone runs as fast as it can.
   (function () {
     var raf = window.requestAnimationFrame.bind(window);
-    var st = window.todakPace = { mode: 'auto', step: 1, vs: 16.7, work: 6, late: 0, n: 0, last: 0, ran: 0, hist: [] };
+    var st = window.todakPace = { mode: 'max', step: 1, vs: 16.7, work: 6, late: 0, n: 0, last: 0, ran: 0, hist: [] };
     function choose() {
       var base = Math.max(1, Math.round(16.7 / st.vs));
       var slow = Math.max(base, Math.round(33.3 / st.vs));
+      if (st.mode === 'max') {
+        if (st.step < base && (st.work > 0.92 * st.step * st.vs || st.late > 0.15)) st.step++;
+        else if (st.step > 1 && st.work < 0.62 * (st.step - 1) * st.vs && st.late < 0.03) st.step--;
+        else if (st.step > base) st.step = base;
+        st.n = 0; st.late = 0;
+        return;
+      }
       if (st.mode === '30') st.step = slow;
       else if (st.step < slow && (st.work > 0.92 * base * st.vs || st.late > 0.15)) st.step = slow;
       else if (st.step > base && st.work < 0.62 * base * st.vs && st.late < 0.03) st.step = base;
@@ -234,7 +243,7 @@ html, body { background: #120a06; }
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw65ffmx.pck":26387976},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw65ffmx.pck"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw68wuyi.pck":26407968},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw68wuyi.pck"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
