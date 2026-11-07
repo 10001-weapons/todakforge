@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /wa/
+Sitemap: https://todakforge.com/sitemap.xml

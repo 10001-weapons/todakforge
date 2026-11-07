@@ -198,7 +198,12 @@ html, body { background: #120a06; }
     try { var p = tag.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
   }
   ['touchstart', 'touchend', 'pointerdown', 'keydown', 'click'].forEach(function (n) { window.addEventListener(n, wake, { capture: true, passive: true }); });
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) wake(); });
+  // (11-07: 창을 내리거나 화면이 꺼져도 소리가 계속 나요) asleep while the page is hidden, awake when it shows again
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) ctxs.forEach(function (c) { try { if (c.state === 'running') c.suspend(); } catch (e) {} });
+    else wake();
+  });
+  window.addEventListener('pagehide', function () { ctxs.forEach(function (c) { try { c.suspend(); } catch (e) {} }); });
   // 홈 화면에 추가 (11-06): keep the browser's offer for the game to show at the right moment
   window.todak = {
     offer: null,
@@ -229,7 +234,7 @@ html, body { background: #120a06; }
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw63ac4j.pck":26384136},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw63ac4j.pck"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw65ffmx.pck":26387976},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw65ffmx.pck"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
