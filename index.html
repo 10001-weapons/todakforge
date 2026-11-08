@@ -135,7 +135,7 @@ html, body { background: #120a06; }
   // page cannot take a touch meanwhile). Instead the game's frame is run on every Nth screen refresh: 60 at most, 30
   // when its frames take more than the 60's share, back to 60 when they fit again. todakPace.mode: max / 60 / 30.
   // 최대 (11-07: fps를 최대로): every refresh — 90 · 120 on such screens, stepping to 60 there when frames do not fit —
-  // and never held back to 30: a slow phone runs as fast as it can.
+  // and (user 11-08: 버벅여서 하기 싫어요) when even 60 does not fit, an even 30 rather than an uneven 40-55, which read as stutter.
   (function () {
     var raf = window.requestAnimationFrame.bind(window);
     var st = window.todakPace = { mode: 'max', step: 1, vs: 16.7, work: 6, late: 0, n: 0, last: 0, ran: 0, hist: [] };
@@ -143,9 +143,8 @@ html, body { background: #120a06; }
       var base = Math.max(1, Math.round(16.7 / st.vs));
       var slow = Math.max(base, Math.round(33.3 / st.vs));
       if (st.mode === 'max') {
-        if (st.step < base && (st.work > 0.92 * st.step * st.vs || st.late > 0.15)) st.step++;
+        if (st.step < slow && (st.work > 0.92 * st.step * st.vs || st.late > 0.15)) st.step++;
         else if (st.step > 1 && st.work < 0.62 * (st.step - 1) * st.vs && st.late < 0.03) st.step--;
-        else if (st.step > base) st.step = base;
         st.n = 0; st.late = 0;
         return;
       }
@@ -298,7 +297,7 @@ html, body { background: #120a06; }
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw7hz005.pck":27321848},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw7hz005.pck"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw7jkn5a.pck":27323240},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw7jkn5a.pck"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
