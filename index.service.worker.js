@@ -1,4 +1,4 @@
-// 토닥토닥 대장간 · build mw7o5puk
+// 토닥토닥 대장간 · build mw7rbman
 // Keeps nothing: every visit gets the newest game. A new build takes over at once, clears what the old
 // worker cached, and reloads a page that was still showing the old game.
 self.addEventListener('install', () => self.skipWaiting());
