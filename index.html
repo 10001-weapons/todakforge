@@ -106,12 +106,39 @@ body {
 <meta name="apple-mobile-web-app-title" content="토닥토닥 대장간">
 <style>
 html, body { background: #000; }
-#status { background: #000; }
+/* (user 11-08: 로고가 한 번만 뜨면 되는데 두 번 다르게 떠요 · 둘레가 번지는 예전처럼 · 가운데) one start screen from the first
+   paint until the game has drawn its first place (Main.booted): the home-screen icon's picture fading into black, as
+   big and as high as the phone's own start screen drew it, so that one runs into this one. The engine's boot picture
+   and its black curtain stay under it; only its progress bar shows over it. */
+body::after { content: ''; position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 5; pointer-events: none;
+  background: #000 url(boot.jpg) no-repeat 50% calc(50% - var(--boot-up, 0px)); background-size: 276px 276px;
+  transition: opacity .5s ease; }
+html.todak-booted body::after { opacity: 0; }
+html.todak-gone body::after { display: none; }
+#status { background: transparent !important; z-index: 6; }
+#status-splash { display: none !important; }
 #status-progress { width: 62%; max-width: 280px; accent-color: #ff9a52; }
 #status-notice { color: #f3eee6; font-family: sans-serif; }
 </style>
 <script>
 (function () {
+  // 시작 화면 (user 11-08): the phone's start screen puts the icon in the middle of the whole screen; a home-screen
+  // app's page starts under the status bar (and above a button bar), so the face goes up by what that moves the
+  // middle (a status bar of 24 assumed when a button bar is there too). Main.booted lifts the screen.
+  (function () {
+    var d = document.documentElement;
+    try {
+      var app = window.matchMedia && matchMedia('(display-mode: standalone)').matches;
+      var miss = screen.height - window.innerHeight;
+      if (app && miss > 0 && miss < 160) d.style.setProperty('--boot-up', (miss <= 40 ? miss / 2 : 24 - miss / 2) + 'px');
+    } catch (e) {}
+    window.todakBooted = function () {
+      if (d.classList.contains('todak-booted')) return;
+      d.classList.add('todak-booted');
+      setTimeout(function () { d.classList.add('todak-gone'); }, 700);
+    };
+    setTimeout(window.todakBooted, 90000);
+  })();
   // 소리 (11-06: 소리가 안 나요): phones keep web audio asleep until a touch; wake every audio context the
   // game makes on the first touches, and on iPhone play a short silent clip so sound comes even with the
   // silent switch on.
@@ -222,6 +249,49 @@ html, body { background: #000; }
   };
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.todak.offer = e; });
   window.addEventListener('appinstalled', function () { window.todak.offer = null; });
+  // 배경음악 (user 11-08: 계속 렉이 있고 버벅거려요): the page plays the music from the files beside it (music/*.ogg, or
+  // .mp3 where Ogg does not play), so the engine never decodes whole tracks; the game says per track how loud it should
+  // be and how fast to get there (Sfx._music_tick). Through a gain node: an iPhone ignores an audio tag's volume.
+  window.todakMusic = (function () {
+    var ext = '.mp3';
+    try { if (document.createElement('audio').canPlayType('audio/ogg; codecs=vorbis')) ext = '.ogg'; } catch (e) {}
+    var ctx = null, tracks = {};
+    function get(k) {
+      var t = tracks[k];
+      if (t) return t;
+      var a = new Audio('music/' + k + ext);
+      a.loop = true; a.preload = 'auto'; a.setAttribute('playsinline', '');
+      t = tracks[k] = { a: a, g: null, want: 0, stop: 0 };
+      try {
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var src = ctx.createMediaElementSource(a);
+        t.g = ctx.createGain(); t.g.gain.value = 0;
+        src.connect(t.g); t.g.connect(ctx.destination);
+      } catch (e) { t.g = null; a.volume = 0; }
+      return t;
+    }
+    function play(t) { try { var p = t.a.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+    // a phone starts music only from a touch: the next touch starts what the game has asked for
+    ['touchend', 'pointerup', 'keydown', 'click'].forEach(function (n) {
+      window.addEventListener(n, function () { for (var k in tracks) if (tracks[k].want > 0 && tracks[k].a.paused && !document.hidden) play(tracks[k]); }, { capture: true, passive: true });
+    });
+    document.addEventListener('visibilitychange', function () {
+      for (var k in tracks) { var t = tracks[k]; if (document.hidden) t.a.pause(); else if (t.want > 0) play(t); }
+    });
+    return {
+      set: function (k, gain, secs) {
+        var t = get(k);
+        t.want = gain;
+        clearTimeout(t.stop);
+        if (t.g && ctx) {
+          var now = ctx.currentTime, g = t.g.gain;
+          g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.setTargetAtTime(gain, now, Math.max(0.05, secs / 3));
+        } else t.a.volume = Math.min(1, gain);
+        if (gain > 0) { if (t.a.paused && !document.hidden) play(t); }
+        else t.stop = setTimeout(function () { t.a.pause(); }, secs * 1000 + 300);
+      }
+    };
+  })();
 })();
 </script>
 	<!--seo--><style>:root{--sat:env(safe-area-inset-top,0px)}html,body{background:#000}</style><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="naver-site-verification" content="b6fa2698a9af0001e9d6c2c77af804659aec0f3e"><meta name="jeojat-verify" content="mm-feecc35deebd642452ac10b1"><script>(function () {
@@ -297,7 +367,7 @@ html, body { background: #000; }
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw7tzeav.pck":28846088},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw7tzeav.pck"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.wasm":39514754,"index-mw7xvybe.pck":27916016},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js","mainPack":"index-mw7xvybe.pck"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 

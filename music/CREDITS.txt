@@ -1,0 +1,4 @@
+배경음악 (Background music) — both CC0 (public domain), from OpenGameArt.org
+- bgm_fire.ogg: "A Small Fire Will Do (Calming Loop)" by Trex0n — https://opengameart.org/content/a-small-fire-will-do-calming-loop
+- bgm_day.ogg: "Etirwer" (looped) by Kistol — https://opengameart.org/content/etirwer
+Converted to mono 32 kHz Ogg Vorbis for the web build (memory: the web decodes each track whole).
